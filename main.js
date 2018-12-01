@@ -1,81 +1,158 @@
-let box = null;
-let player = null;
-let gameResult = null;
-let buttonResult = null;
+let gameBoard;
+let displayCurrentPlayer;
+let displayGameNumber;
+let displayXWins;
+let displayOWins;
+let displayDraws
+//buttons
+let pvpButton;
+let pvcButton;
+let buttonResult;
 
-let firstPlayer = 'X';
-let secondPlayer = 'O';
-let currentPlayer = firstPlayer;
-let square = ['0', '1', '2', '3', '4', '5', '6', '7', '8'];
+let gameBegin;
+let gameResult;
+
+let firstPlayer = '';
+let secondPlayer = '';
+let currentPlayer;
+let square = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+let winConditions = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6]
+]
+let winner = '';
 
 let turn = 0;
+let gameNr = 0;
+let oWins = 0;
+let xWins = 0;
+let draws = 0;
 
-function addSign() {
+//new Player vs Player game
+function newPvPGame() {
+  gameBoard.forEach((el) => {
+    el.addEventListener('click', PVPaddSign);
+    el.classList.add('square-hover');
+  });
+  firstPlayer = 'X';
+  secondPlayer = 'O';
+  gameNr++;
+  //new game will be begined by loser
+  if (winner === 'X') {
+    currentPlayer = secondPlayer;
+  } else {
+    currentPlayer = firstPlayer;
+  }
+  gameBegin.style.display = 'none';
+  displayCurrentPlayer.textContent = currentPlayer;
+  displayGameNumber.textContent = gameNr;
+}
+
+//add sign by Player
+function PVPaddSign() {
   if (!this.textContent) {
     this.textContent = currentPlayer;
     square[this.id] = this.textContent;
     this.classList.remove('square-hover');
-    isWin();
-    playerChange();
-    player.textContent = currentPlayer;
-    turn++;
+
+    if (isWin() || turn >= 8) {
+      endGame();
+    } else {
+      playerChange();
+      displayCurrentPlayer.textContent = currentPlayer;
+      turn++;
+    }
   } else {
     return
   }
 }
 
+//change displayCurrentPlayer
 function playerChange() {
-  if (currentPlayer == firstPlayer) {
-    currentPlayer = secondPlayer
-  } else {
-    currentPlayer = firstPlayer
-  }
+  currentPlayer === firstPlayer ? currentPlayer = secondPlayer : currentPlayer = firstPlayer
 }
 
+//check is win
 function isWin() {
-  if (square[0] === square[1] && square[1] === square[2] ||
-    square[3] === square[4] && square[4] === square[5] ||
-    square[6] === square[7] && square[7] === square[8] ||
-    square[0] === square[3] && square[3] === square[6] ||
-    square[1] === square[4] && square[4] === square[7] ||
-    square[2] === square[5] && square[5] === square[8] ||
-    square[0] === square[4] && square[4] === square[8] ||
-    square[2] === square[4] && square[4] === square[6]) {
-    gameResult.querySelector('span').textContent = currentPlayer;
-    gameResult.style.display = 'block';
-  } else if (turn >= 8) {
-    gameResult.querySelector('span').textContent = "Remis";
-    gameResult.style.display = 'block';
-  }
-}
-
-function newGame() {
-  gameResult.style.display = 'none';
-  clearBoard()
-  turn = 0;
-  square = ['0', '1', '2', '3', '4', '5', '6', '7', '8'];
-  box.forEach((el) => {
-    el.classList.add('square-hover')
+  let won = false;
+  winConditions.forEach(condition => {
+    if (square[condition[0]] !== '' &&
+      square[condition[0]] === square[condition[1]] && square[condition[1]] === square[condition[2]] && square[condition[0]] === square[condition[2]]) {
+      won = true;
+    }
   });
+  return won;
 }
 
-function clearBoard() {
-  box.forEach((el) => {
-    el.textContent = ''
+//game result
+function endGame() {
+  gameBoard.forEach((el) => {
+    el.classList.remove('square-hover');
   })
+  if (isWin()) {
+    winner = currentPlayer;
+    gameResult.querySelector('span').textContent = `Player ${winner}`;
+  } else {
+    gameResult.querySelector('span').textContent = "Remis";
+  }
+  if (winner === "X")
+    xWins++
+  else if (winner === 'O')
+    oWins++
+  else
+    draws++;
+  gameResult.style.display = 'block';
+  display();
+}
+
+//game restart
+function newGame() {
+  gameResult.style.display = '';
+  gameBegin.style.display = '';
+  clearBoard();
+}
+
+//cleaning a board
+function clearBoard() {
+  gameBoard.forEach((el) => {
+    el.textContent = '';
+  });
+  square = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  turn = 0;
+}
+
+//display results
+function display() {
+  displayXWins.textContent = xWins;
+  displayOWins.textContent = oWins;
+  displayDraws.textContent = draws;
 }
 
 window.addEventListener('DOMContentLoaded', function () {
-  box = [...document.querySelectorAll('.square')];
-  player = document.querySelector('#player');
-  player.textContent = currentPlayer;
+  //game elements
+  gameBoard = [...document.querySelectorAll('.square')];
+  //game display
+  displayCurrentPlayer = document.querySelector('#player');
   gameResult = document.querySelector('.game-result');
-  buttonResult = document.querySelector('.game-result-button');
+  gameBegin = document.querySelector('#gameBegin');
+  displayGameNumber = document.querySelector('#gameNumber');
+  displayXWins = document.querySelector('#playerXWins');
+  displayOWins = document.querySelector('#playerOWins');
+  displayDraws = document.querySelector('#draw');
+  //game buttons
+  buttonResult = document.querySelector('#game-result-button');
+  pvpButton = document.querySelector('#playerVsPlayer');
+  pvcButton = document.querySelector('playerVsComputer');
 
-  box.forEach((el) => {
-    el.addEventListener('click', addSign);
-  })
+  //start game 
+  pvpButton.addEventListener('click', newPvPGame);
+  // pvcButton.addEventListener('click', newPvCGame);
 
   buttonResult.addEventListener('click', newGame);
-
 })
